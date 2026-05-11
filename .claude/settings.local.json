@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:4567/api/http://example.com\")",
+      "Bash(curl -v \"http://localhost:4567/api/http://example.com\")",
+      "Bash(docker-compose up *)"
+    ]
+  }
+}

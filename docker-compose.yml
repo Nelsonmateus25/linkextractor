@@ -2,6 +2,7 @@ version: '3'
 
 services:
   api:
+    platform: linux/amd64
     image: linkextractor-api:step6-ruby
     build: ./api
     ports:

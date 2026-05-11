@@ -2,6 +2,7 @@ version: '3'
 
 services:
   api:
+    platform: linux/amd64
     image: linkextractor-api:ruby-nocache
     build: ./api
     ports:
