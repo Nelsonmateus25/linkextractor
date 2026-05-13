@@ -23,16 +23,24 @@ from locust import HttpUser, task, between
 
 # 10 URLs públicas e estáveis para os testes
 TEST_URLS = [
-    "http://example.com",
-    "http://example.org",
-    "http://example.net",
-    "https://www.iana.org/domains/reserved",
-    "http://info.cern.ch",
-    "https://httpbin.org/links/10",
-    "https://quotes.toscrape.com",
-    "https://toscrape.com",
+
+    "https://en.wikipedia.org/wiki/Special:AllPages",
+
+    "https://httpbin.org/links/1000/1",
     "https://crawler-test.com",
-    "https://httpbin.org/html",
+
+    "https://github.com/apache",
+    "https://arxiv.org/list/cs/recent",
+
+    "https://linuxtracker.org/",
+    "https://wordpress.org/plugins/",
+
+
+    "https://news.ycombinator.com/news?p=1",
+
+    "https://en.wikipedia.org/wiki/Index_of_computing_articles",
+
+    "https://www.iana.org/domains/reserved"
 ]
 
 

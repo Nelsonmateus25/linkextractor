@@ -1,2 +1,0 @@
-Method,Name,Error,Occurrences
-GET,/api/[url],CatchResponseError('HTTP 500'),7
