@@ -1,1 +1,2 @@
-Method,Name,Error,Occurrences
+Method,Name,Error,Occurrences
+GET,/api/[url],CatchResponseError('HTTP 0'),3867

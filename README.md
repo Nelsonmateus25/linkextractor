@@ -1,374 +1,180 @@
-````md
-# Trabalho 4 — Testes de Desempenho com Link Extractor
+# Trabalho 4 - Testes de Desempenho com Link Extractor
 
-Este repositório contém uma versão da aplicação Link Extractor preparada para comparar o desempenho da API implementada em Ruby e em Python, executando os dois cenários com cache e sem cache.
+Este trabalho compara o desempenho da aplicacao Link Extractor em quatro cenarios: API Ruby com cache, API Ruby sem cache, API Python com cache e API Python sem cache. Os testes foram executados com Locust, os dados foram salvos em CSV na pasta `resultados/` e os graficos finais foram gerados em PNG.
 
-Os testes foram realizados com Locust, e os resultados foram exportados em arquivos CSV dentro da pasta `resultados/`.
+A aplicacao recebe uma URL no endpoint `/api/<url>`, baixa a pagina informada, extrai os links encontrados e devolve uma resposta JSON contendo o texto e o endereco de cada link.
 
-A aplicação possui:
+## Estrutura do projeto
 
-- uma interface web em PHP;
-- uma API que recebe uma URL no endpoint `/api/<url>`;
-- extração de links da página informada;
-- retorno em JSON contendo o texto e o endereço de cada link encontrado.
+- `api/`: API Ruby implementada com Sinatra, Nokogiri e Redis.
+- `api-python/`: API Python implementada com Flask, BeautifulSoup, lxml e Redis.
+- `www/`: interface web em PHP.
+- `locustfile.py`: script de teste de carga usado pelo Locust.
+- `resultados/`: arquivos CSV dos testes e graficos PNG gerados.
+- `docker-compose.yml`: Ruby com cache.
+- `docker-compose-ruby-no-cache.yml`: Ruby sem cache.
+- `docker-compose-python.yml`: Python com cache.
+- `docker-compose-python-no-cache.yml`: Python sem cache.
+- `comandos_graficos_barras.ipynb`: notebook usado para trabalhar os resultados e gerar os graficos.
 
----
+## Como os testes foram feitos
 
-# Sumário
+Os testes foram feitos com o Locust usando o arquivo `locustfile.py`. O usuario virtual percorre uma lista de 10 URLs publicas, codifica cada URL com `quote(url, safe="")` e faz requisicoes para `/api/<url_codificada>`.
 
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Requisitos](#requisitos)
-- [Arquitetura Geral](#arquitetura-geral)
-- [Metodologia dos Testes](#metodologia-dos-testes)
-- [Execução dos Cenários](#execução-dos-cenários)
-  - [Ruby com Cache](#ruby-com-cache)
-  - [Ruby sem Cache](#ruby-sem-cache)
-  - [Python com Cache](#python-com-cache)
-  - [Python sem Cache](#python-sem-cache)
-- [Gráficos Gerados](#gráficos-gerados)
-- [Arquivos de Resultados](#arquivos-de-resultados)
+As URLs usadas incluem paginas mais pesadas e com muitos links, como Wikipedia, httpbin com 1000 links, GitHub, arXiv, WordPress plugins, Hacker News e IANA. Isso aumenta o trabalho de download, parsing HTML e extracao de links, deixando a comparacao entre cache e sem cache mais evidente.
 
----
+Foram gerados resultados para 25, 50 e 100 usuarios simultaneos em cada um dos quatro cenarios:
 
-# Estrutura do Projeto
+- Ruby com cache.
+- Ruby sem cache.
+- Python com cache.
+- Python sem cache.
 
-```text
-.
-├── api/
-├── api-python/
-├── www/
-├── resultados/
-├── locustfile.py
-├── docker-compose.yml
-├── docker-compose-ruby-no-cache.yml
-├── docker-compose-python.yml
-└── docker-compose-python-no-cache.yml
-````
-
-Descrição das pastas e arquivos principais:
-
-* `api/`: implementação da API em Ruby utilizando Sinatra, Nokogiri e Redis.
-* `api-python/`: implementação da API em Python utilizando Flask, BeautifulSoup e Redis.
-* `www/`: interface web em PHP.
-* `locustfile.py`: script utilizado para execução dos testes de carga.
-* `resultados/`: arquivos CSV gerados pelo Locust e gráficos em PNG.
-* `docker-compose.yml`: execução da API Ruby com cache.
-* `docker-compose-ruby-no-cache.yml`: execução da API Ruby sem cache.
-* `docker-compose-python.yml`: execução da API Python com cache.
-* `docker-compose-python-no-cache.yml`: execução da API Python sem cache.
-
----
-
-# Requisitos
-
-Para executar o projeto e reproduzir os testes são necessários:
-
-* Docker;
-* Docker Compose;
-* Python 3.x;
-* Locust instalado no ambiente.
-
-Instalação do Locust:
-
-```bash
-pip install locust
-```
-
----
-
-# Arquitetura Geral
-
-A arquitetura utilizada nos testes pode ser representada da seguinte forma:
-
-```text
-Locust
-   │
-   ▼
-API Ruby / API Python
-   │
-   ├── Extração de links
-   │
-   └── Redis (quando cache habilitado)
-```
-
-Fluxo geral da aplicação:
-
-1. O cliente realiza uma requisição para `/api/<url>`.
-2. A API processa a URL recebida.
-3. A página é baixada e analisada.
-4. Os links encontrados são extraídos.
-5. A resposta JSON é retornada ao cliente.
-6. Nos cenários com cache, os resultados são armazenados no Redis.
-
----
-
-# Metodologia dos Testes
-
-Os testes de desempenho foram executados com Locust utilizando o arquivo `locustfile.py`.
-
-O usuário virtual definido nesse arquivo acessa sequencialmente 10 URLs públicas e estáveis, sempre chamando o endpoint da API no formato:
-
-```text
-/api/<url>
-```
-
-Foram coletados resultados para:
-
-* 1 usuário simultâneo;
-* 5 usuários simultâneos;
-* 10 usuários simultâneos;
-* 25 usuários simultâneos;
-* 50 usuários simultâneos.
-
-Os testes foram realizados em quatro cenários:
-
-* Ruby com cache;
-* Ruby sem cache;
-* Python com cache;
-* Python sem cache.
-
-Exemplo de execução em modo headless:
+Exemplo de execucao em modo headless para a API Ruby:
 
 ```bash
 locust -f locustfile.py \
   --host http://localhost:4567 \
-  --users 10 \
+  --users 50 \
   --spawn-rate 2 \
   --run-time 60s \
   --headless \
-  --csv resultados/ruby_cache_10u
+  --csv resultados/ruby_cache_50u
 ```
 
-Hosts utilizados:
+Para testar Ruby, o host usado e `http://localhost:4567`. Para testar Python, o host usado e `http://localhost:5000`.
 
-* API Ruby: `http://localhost:4567`
-* API Python: `http://localhost:5000`
+## Graficos gerados
 
----
+Todos os graficos PNG gerados pelo trabalho estao abaixo.
 
-# Execução dos Cenários
+### Grafico 1 - Mediana do tempo de resposta
 
-## Ruby com Cache
+![Mediana do tempo de resposta](resultados/real_grafico1_mediana.png)
 
-O cenário Ruby com cache é executado pelo arquivo:
+### Grafico 2 - Percentil 95 do tempo de resposta
 
-```text
-docker-compose.yml
+![Percentil 95 do tempo de resposta](resultados/real_grafico2_p95.png)
+
+### Grafico 3 - Requisicoes por segundo
+
+![Requisicoes por segundo](resultados/real_grafico3_rps.png)
+
+### Grafico 4 - Comparacao de percentis
+
+![Comparacao de percentis](resultados/real_grafico4_percentis.png)
+
+### Grafico 5 - Taxa de falha
+
+![Taxa de falha](resultados/real_grafico5_taxa_falha.png)
+
+## Ruby com cache
+
+O cenario Ruby com cache usa o arquivo `docker-compose.yml`. Nele, o servico `api` e construido a partir da pasta `api/`, expoe a porta `4567` e recebe `REDIS_URL=redis://redis:6379`. O mesmo compose tambem cria o servico `redis`, responsavel por armazenar as respostas da API.
+
+Na implementacao `api/linkextractor.rb`, o cache fica ativo por padrao porque `USE_CACHE` e lido com valor padrao `"true"`:
+
+```ruby
+use_cache = ENV.fetch("USE_CACHE", "true") == "true"
 ```
 
-Nesse modo:
+Quando o cache esta ativo, a API cria uma conexao com Redis usando a URL definida em `REDIS_URL`. Para cada requisicao em `/api/*`, a URL recebida e usada como chave no Redis.
 
-* o serviço `api` é construído a partir da pasta `api/`;
-* a porta `4567` é exposta;
-* a variável de ambiente `REDIS_URL=redis://redis:6379` é utilizada.
+Fluxo implementado:
 
-O mesmo compose sobe um container `redis`, utilizado pela API Ruby para armazenar os resultados da extração de links.
+1. A API recebe a URL pelo endpoint `/api/*`.
+2. O codigo monta a URL final juntando o caminho recebido e a query string.
+3. A API consulta o Redis usando a URL como chave.
+4. Se existir valor salvo, ocorre `HIT` e o JSON em cache e retornado.
+5. Se nao existir valor salvo, ocorre `MISS`, a pagina e baixada com `open-uri`, os links sao extraidos com `Nokogiri` e o JSON e salvo no Redis.
+6. A requisicao e registrada em `logs/extraction.log` com timestamp, status do cache e URL.
 
-Na implementação em `api/linkextractor.rb`, o cache permanece ativo por padrão, pois a variável `USE_CACHE` possui valor padrão `"true"`.
-
-### Fluxo implementado
-
-1. A API recebe uma requisição em `/api/<url>`.
-2. A URL recebida é utilizada como chave no Redis.
-3. Caso o resultado exista no Redis, ocorre um *cache hit* e o JSON armazenado é retornado.
-4. Caso não exista, ocorre um *cache miss*:
-
-   * a página é baixada com `open-uri`;
-   * os links são extraídos com `Nokogiri`;
-   * o JSON é salvo no Redis;
-   * a resposta é retornada ao cliente.
-5. O arquivo `logs/extraction.log` registra:
-
-   * timestamp;
-   * status do cache;
-   * URL consultada.
-
-### Execução
+Para executar:
 
 ```bash
 docker compose -f docker-compose.yml up --build
 ```
 
----
+## Ruby sem cache
 
-## Ruby sem Cache
+O cenario Ruby sem cache usa o arquivo `docker-compose-ruby-no-cache.yml`. Ele utiliza a mesma API Ruby da pasta `api/`, mas define a variavel `USE_CACHE=false` e nao sobe o container Redis.
 
-O cenário Ruby sem cache é executado pelo arquivo:
+Com `USE_CACHE=false`, a variavel `use_cache` fica falsa em `api/linkextractor.rb`. Nesse modo, a API nao consulta nem grava dados no Redis. O status registrado no log passa a ser `BYPASS`, indicando que o cache foi ignorado.
 
-```text
-docker-compose-ruby-no-cache.yml
-```
+Fluxo implementado:
 
-Nesse modo:
+1. A API recebe a URL pelo endpoint `/api/*`.
+2. A consulta ao Redis nao e feita.
+3. A pagina e baixada novamente em toda requisicao.
+4. Os links sao extraidos com `Nokogiri`.
+5. O JSON e gerado e retornado diretamente.
+6. A requisicao e registrada em `logs/extraction.log` com status `BYPASS`.
 
-* a mesma implementação Ruby da pasta `api/` é utilizada;
-* a variável `USE_CACHE=false` é definida;
-* o serviço Redis não é iniciado.
-
-Com isso:
-
-* a variável `use_cache` em `api/linkextractor.rb` torna-se falsa;
-* a API registra inicialização sem cache;
-* todas as requisições utilizam status `BYPASS` no log.
-
-### Fluxo implementado
-
-1. A API recebe uma requisição em `/api/<url>`.
-2. Nenhuma consulta ao Redis é realizada.
-3. A página é sempre baixada novamente.
-4. Os links são extraídos com `Nokogiri`.
-5. A resposta JSON é gerada e retornada diretamente.
-6. O arquivo `logs/extraction.log` registra a requisição com status `BYPASS`.
-
-### Execução
+Para executar:
 
 ```bash
 docker compose -f docker-compose-ruby-no-cache.yml up --build
 ```
 
----
+## Python com cache
 
-## Python com Cache
+O cenario Python com cache usa o arquivo `docker-compose-python.yml`. Nele, o servico `api` e construido a partir da pasta `api-python/`, expoe a porta `5000` e recebe `REDIS_URL=redis://redis:6379` e `USE_CACHE=true`. O compose tambem sobe um container `redis`.
 
-O cenário Python com cache é executado pelo arquivo:
+Na implementacao `api-python/linkextractor.py`, a variavel `USE_CACHE` e lida do ambiente. Quando ela esta ativa, a API tenta criar um cliente Redis com `redis.StrictRedis.from_url()` e valida a conexao com `ping()`. Se a conexao falhar, o codigo desativa o cache automaticamente para manter a API funcionando.
 
-```text
-docker-compose-python.yml
-```
+Fluxo implementado:
 
-Nesse modo:
+1. A API recebe a URL pelo endpoint `/api/<path:url>`.
+2. Se `USE_CACHE` estiver ativo e houver cliente Redis, a API consulta o Redis usando a URL como chave.
+3. Se existir valor salvo, o JSON armazenado e retornado diretamente.
+4. Se nao existir valor salvo, a pagina e baixada com `urllib.request`.
+5. O HTML e processado com `BeautifulSoup` usando o parser `lxml`.
+6. Os links encontrados sao convertidos para URLs absolutas com `urljoin`.
+7. O JSON final e salvo no Redis e retornado ao cliente.
 
-* o serviço `api` é construído a partir da pasta `api-python/`;
-* a porta `5000` é exposta;
-* as variáveis:
-
-  * `REDIS_URL=redis://redis:6379`
-  * `USE_CACHE=true`
-    são utilizadas.
-
-O compose também sobe um container `redis`.
-
-Na implementação em `api-python/linkextractor.py`:
-
-* a API utiliza `redis.StrictRedis.from_url()`;
-* a conexão é validada com `ping()`.
-
-Caso o Redis esteja indisponível, o cache é desativado automaticamente.
-
-### Fluxo implementado
-
-1. A API recebe uma requisição em `/api/<url>`.
-2. Se o cache estiver ativo, a URL é consultada no Redis.
-3. Caso exista valor armazenado, o JSON é retornado diretamente.
-4. Caso não exista:
-
-   * a página é baixada com `urllib.request`;
-   * os links são extraídos com `BeautifulSoup`;
-   * o parser `lxml` é utilizado;
-   * o JSON é salvo no Redis;
-   * a resposta é retornada ao cliente.
-
-### Execução
+Para executar:
 
 ```bash
 docker compose -f docker-compose-python.yml up --build
 ```
 
----
+## Python sem cache
 
-## Python sem Cache
+O cenario Python sem cache usa o arquivo `docker-compose-python-no-cache.yml`. Ele utiliza a mesma API da pasta `api-python/`, mas define `USE_CACHE=false` e nao cria o servico Redis.
 
-O cenário Python sem cache é executado pelo arquivo:
+Com essa configuracao, `api-python/linkextractor.py` inicia em modo sem cache. A API nao consulta Redis e nao armazena as respostas, entao cada requisicao executa novamente o download da pagina, o parsing do HTML e a extracao dos links.
 
-```text
-docker-compose-python-no-cache.yml
-```
+Fluxo implementado:
 
-Nesse modo:
+1. A API recebe a URL pelo endpoint `/api/<path:url>`.
+2. Nenhuma consulta ao Redis e feita.
+3. A pagina e baixada com `urllib.request`, usando um `User-Agent` definido no codigo.
+4. O HTML e processado com `BeautifulSoup` e `lxml`.
+5. Os links sao convertidos com `urljoin`.
+6. O JSON e retornado sem ser salvo em cache.
 
-* a mesma implementação da pasta `api-python/` é utilizada;
-* `USE_CACHE=false` é definido;
-* o serviço Redis não é iniciado.
-
-Com essa configuração:
-
-* `api-python/linkextractor.py` inicia sem cache;
-* cada requisição executa novamente todo o processo de download e extração.
-
-### Fluxo implementado
-
-1. A API recebe uma requisição em `/api/<url>`.
-2. Nenhuma consulta ao Redis é realizada.
-3. A página é baixada com `urllib.request`.
-4. Um `User-Agent` é definido na requisição.
-5. Os links são processados com `BeautifulSoup`.
-6. A resposta JSON é retornada sem armazenamento em cache.
-
-### Execução
+Para executar:
 
 ```bash
 docker compose -f docker-compose-python-no-cache.yml up --build
 ```
 
----
+## Arquivos de resultados
 
-# Gráficos Gerados
+Os arquivos gerados pelo Locust ficam em `resultados/`. Para cada combinacao de linguagem, uso de cache e quantidade de usuarios, existem arquivos com estes sufixos:
 
-Os gráficos abaixo foram gerados a partir dos arquivos CSV presentes em `resultados/` e resumem as principais métricas dos testes.
+- `*_stats.csv`: resumo estatistico da execucao.
+- `*_stats_history.csv`: historico das metricas durante o teste.
+- `*_failures.csv`: falhas registradas.
+- `*_exceptions.csv`: excecoes registradas.
 
-## Gráfico 1 — Mediana do Tempo de Resposta
+Exemplos de nomes gerados:
 
-![Mediana do tempo de resposta](resultados/real_grafico1_mediana.png)
+- `ruby_cache_25u_stats.csv`
+- `ruby_nocache_50u_stats.csv`
+- `ruby_cache_100u_stats.csv`
+- `python_cache_25u_stats.csv`
+- `python_nocache_50u_stats.csv`
+- `python_cache_100u_stats.csv`
 
----
-
-## Gráfico 2 — Percentil 95 do Tempo de Resposta
-
-![Percentil 95 do tempo de resposta](resultados/real_grafico2_p95.png)
-
----
-
-## Gráfico 3 — Requisições por Segundo
-
-![Requisições por segundo](resultados/real_grafico3_rps.png)
-
----
-
-## Gráfico 4 — Comparação de Percentis
-
-![Comparação de percentis](resultados/real_grafico4_percentis.png)
-
----
-
-# Arquivos de Resultados
-
-Para cada combinação de:
-
-* linguagem;
-* uso de cache;
-* quantidade de usuários;
-
-o Locust gerou arquivos no seguinte formato:
-
-* `*_stats.csv`: resumo estatístico da execução;
-* `*_stats_history.csv`: histórico das métricas durante o teste;
-* `*_failures.csv`: falhas registradas;
-* `*_exceptions.csv`: exceções registradas.
-
-Os arquivos seguem o padrão:
-
-```text
-linguagem_cache_usuarios
-```
-
-Exemplos:
-
-```text
-ruby_cache_10u_stats.csv
-ruby_nocache_25u_stats.csv
-python_cache_50u_stats.csv
-python_nocache_1u_stats.csv
-```
-
-```
-```
+Esses CSVs foram usados para montar os graficos de mediana, percentil 95, requisicoes por segundo, comparacao de percentis e taxa de falha.
