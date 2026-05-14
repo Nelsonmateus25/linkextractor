@@ -23,6 +23,25 @@ Os testes foram feitos com o Locust usando o arquivo `locustfile.py`. O usuario 
 
 As URLs usadas incluem paginas mais pesadas e com muitos links, como Wikipedia, httpbin com 1000 links, GitHub, arXiv, WordPress plugins, Hacker News e IANA. Isso aumenta o trabalho de download, parsing HTML e extracao de links, deixando a comparacao entre cache e sem cache mais evidente.
 
+## URLs usadas nos testes
+
+A tabela abaixo mostra as 10 URLs usadas no teste de carga e a quantidade de links encontrados em cada pagina durante a extracao.
+
+| Quantidade de links | URL |
+|---:|---|
+| 393 | https://en.wikipedia.org/wiki/Special:AllPages |
+| 199 | https://httpbin.org/links/1000/1 |
+| 415 | https://crawler-test.com |
+| 215 | https://github.com/apache |
+| 635 | https://arxiv.org/list/cs/recent |
+| 262 | https://linuxtracker.org/ |
+| 101 | https://wordpress.org/plugins/ |
+| 226 | https://news.ycombinator.com/news?p=1 |
+| 825 | https://en.wikipedia.org/wiki/Index_of_computing_articles |
+| 65 | https://www.iana.org/domains/reserved |
+
+Essas paginas foram escolhidas porque possuem diferentes tamanhos e estruturas HTML, permitindo testar melhor o custo de download, parsing e extracao de links nas APIs Ruby e Python, tanto com cache quanto sem cache.
+
 Foram gerados resultados para 25, 50 e 100 usuarios simultaneos em cada um dos quatro cenarios:
 
 - Ruby com cache.
