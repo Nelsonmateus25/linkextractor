@@ -1,5 +1,7 @@
 # Trabalho 4 - Testes de Desempenho com Link Extractor
 
+Alunos: Icaro Mota, Mateus Maia e Nelson Mateus
+
 Este trabalho compara o desempenho da aplicacao Link Extractor em quatro cenarios: API Ruby com cache, API Ruby sem cache, API Python com cache e API Python sem cache. Os testes foram executados com Locust, os dados foram salvos em CSV na pasta `resultados/` e os graficos finais foram gerados em PNG.
 
 A aplicacao recebe uma URL no endpoint `/api/<url>`, baixa a pagina informada, extrai os links encontrados e devolve uma resposta JSON contendo o texto e o endereco de cada link.
